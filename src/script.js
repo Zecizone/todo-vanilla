@@ -126,24 +126,21 @@ class Todo {
   }
 
   deleteItem(id) {
-    this.state.items = this.state.items.filter((item) => item.id !== id)
-    this.saveItemsToLocalStorage()
-    this.render()
-  }
+  this.state.items = this.state.items.filter((item) => item.id !== id)
+  this.saveItemsToLocalStorage()
+  this.render()
+}
 
-  toggleCheckedState(id) {
-    this.state.items = this.state.items.map((item) => {
-      if (item.id === id) {
-        return {
-          ...item,
-          isChecked: !item.isChecked
-        }
-      }
-      return item
-    })
-    this.saveItemsToLocalStorage()
-    this.render()
+  toggleCheckedState(id, isChecked) {
+  const itemIndex = this.state.items.findIndex(item => item.id === id)
+  if (itemIndex === -1) {
+    console.error('Tasck is id', id, 'not found')
+    return;
   }
+  this.state.items[itemIndex].isChecked = isChecked
+  this.saveItemsToLocalStorage()
+  this.render()
+}
 
   filter() {
     const queryFormatted = this.state.searchQuery.toLowerCase()
@@ -187,7 +184,7 @@ class Todo {
     }
 
     onDeleteAllButtonClick = () => {
-        const isConfirmed = confirm('Are you sure you wont to delete all?')
+        const isConfirmed = confirm('Are you sure you want to delete all?')
 
         if (isConfirmed) {
             this.state.items = []
@@ -197,49 +194,49 @@ class Todo {
     }
 
     onClick = ({ target }) => {
-  if (target.matches(this.selectors.itemDeleteButton)) {
-    const itemElement = target.closest(this.selectors.item)
-    if (!itemElement) {
-      console.error('Не удалось найти элемент задачи')
-      return
+      if (target.matches(this.selectors.itemDeleteButton)) {
+        const itemElement = target.closest(this.selectors.item)
+        if (!itemElement) {
+          console.error('Не удалось найти элемент задачи')
+          return
+        }
+
+        const itemCheckboxElement = itemElement.querySelector(this.selectors.itemCheckbox)
+        if (!itemCheckboxElement || !itemCheckboxElement.id) {
+          console.error('Не удалось найти чекбокс задачи или у него нет id')
+          return
+        }
+
+        itemElement.classList.add(this.stateClasses.isDisappearing)
+
+        setTimeout(() => {
+          this.deleteItem(itemCheckboxElement.id)
+        }, 400)
+      }
     }
 
-    const itemCheckboxElement = itemElement.querySelector(this.selectors.itemCheckbox)
-    if (!itemCheckboxElement || !itemCheckboxElement.id) {
-      console.error('Не удалось найти чекбокс задачи или у него нет id')
-      return
+    deleteItem(id) {
+      console.log('Попытка удалить задачу с id:', id)
+      this.state.items = this.state.items.filter((item) => item.id !== id)
+      console.log('Осталось задач после удаления:', this.state.items.length)
+      this.saveItemsToLocalStorage()
+      this.render()
     }
-
-    itemElement.classList.add(this.stateClasses.isDisappearing)
-
-    setTimeout(() => {
-      this.deleteItem(itemCheckboxElement.id)
-    }, 400)
-  }
-}
-
-deleteItem(id) {
-  console.log('Попытка удалить задачу с id:', id)
-  this.state.items = this.state.items.filter((item) => item.id !== id)
-  console.log('Осталось задач после удаления:', this.state.items.length)
-  this.saveItemsToLocalStorage()
-  this.render()
-}
 
 
     onChange = ({target}) => {
-        if (target.matches(this.selectors.itemCheckbox)) {
-            this.toggleCheckedState(target.id)
-        }
+      if (target.matches(this.selectors.itemCheckbox)) {
+        this.toggleCheckedState(target.id, target.checked)
+      }
     }
 
     bindEvents () {
-        this.newTaskFormElement.addEventListener('submit', this.onNewTaskFormSubmit)
-        this.searchTaskFormElement.addEventListener('submit', this.onSearchTaskFormSubmit)
-        this.searchTaskInputElement.addEventListener('input', this.onSearchTaskInputChange)
-        this.deleteAllButtonElement.addEventListener('click', this.onDeleteAllButtonClick)
-        this.listElement.addEventListener('click', this.onClick)
-        this.listElement.addEventListener('change', this.onChange)
+      this.newTaskFormElement.addEventListener('submit', this.onNewTaskFormSubmit.bind(this))
+      this.searchTaskFormElement.addEventListener('submit', this.onSearchTaskFormSubmit.bind(this))
+      this.searchTaskInputElement.addEventListener('input', this.onSearchTaskInputChange.bind(this))
+      this.deleteAllButtonElement.addEventListener('click', this.onDeleteAllButtonClick.bind(this))
+      this.listElement.addEventListener('click', this.onClick.bind(this))
+      this.listElement.addEventListener('change', this.onChange.bind(this))
     }
 
 }
